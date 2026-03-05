@@ -9,32 +9,47 @@ class Board:
     def __init__(self):
         self.board = [[None for _ in range(8)] for _ in range(8)]
         self.move_history = []
-        self.backup_dir = ".backups"
+        self.backup_file = ".backups/game_state.json"
+        self.current_turn = Color.WHITE
         self._ensure_backup_dir()
-        self._setup()
-        self._save_backup("initial_position")
+        if not self._load_backup():
+            self._setup()
+            self._save_backup()
 
     def _ensure_backup_dir(self):
-        if not os.path.exists(self.backup_dir):
-            os.makedirs(self.backup_dir)
+        if not os.path.exists(".backups"):
+            os.makedirs(".backups")
 
-    def _save_backup(self, label: str = None):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        if label:
-            filename = f"{timestamp}_{label}.json"
-        else:
-            filename = f"{timestamp}_move_{len(self.move_history)}.json"
+    def _load_backup(self) -> bool:
+        if not os.path.exists(self.backup_file):
+            return False
         
-        filepath = os.path.join(self.backup_dir, filename)
-        
+        try:
+            with open(self.backup_file, 'r') as f:
+                backup_data = json.load(f)
+            
+            self.move_history = backup_data.get("move_history", [])
+            self.current_turn = Color[backup_data.get("current_turn", "WHITE")]
+            
+            for piece_data in backup_data.get("board_state", []):
+                col, row = piece_data["position"]
+                piece_class = globals()[piece_data["type"]]
+                color = Color[piece_data["color"]]
+                self.board[col][row] = piece_class(color, [col, row])
+            
+            return True
+        except Exception:
+            return False
+
+    def _save_backup(self):
         backup_data = {
-            "timestamp": timestamp,
             "move_count": len(self.move_history),
             "move_history": self.move_history,
+            "current_turn": self.current_turn.name,
             "board_state": self._serialize_board()
         }
         
-        with open(filepath, 'w') as f:
+        with open(self.backup_file, 'w') as f:
             json.dump(backup_data, f, indent=2)
 
     def _serialize_board(self) -> list:
@@ -80,9 +95,8 @@ class Board:
     def display(self) -> str:
         lines = []
         lines.append("   A B C D E F G H")
-        for row in range(7, -1, -1):
-            rank = row + 1
-            row_str = f" {rank} "
+        for row in range(8):
+            row_str = f" {row+1} "
             for col in range(8):
                 piece = self.board[col][row]
                 if piece:
@@ -104,9 +118,13 @@ class Board:
             print(error_msg)
             return False
 
+        if piece.color != self.current_turn:
+            error_msg = f"[ERROR] It's {self.current_turn.name}'s turn! You cannot move a {piece.color.name} piece."
+            print(error_msg)
+            return False
+
         target = self.get_piece(to_pos)
 
-        # Prevent capturing own piece
         if target is not None and target.color == piece.color:
             error_msg = f"[ERROR] Cannot capture your own piece at {to_pos}"
             print(error_msg)
@@ -141,6 +159,7 @@ class Board:
                 print(f"  Captured: {target_name}")
             print()
 
+            self.current_turn = Color.BLACK if self.current_turn == Color.WHITE else Color.WHITE
             self._save_backup()
         else:
             print(f"Illegal move: {piece_name} {from_coord} → {to_coord}\n")
@@ -164,7 +183,6 @@ class Board:
         return [col, row]
 
     def get_move_history(self) -> str:
-        """Return formatted move history."""
         if not self.move_history:
             return "No moves yet."
         
@@ -175,5 +193,3 @@ class Board:
                 move_str += f" (captured {move['captured']})"
             lines.append(move_str)
         return "\n".join(lines)
-
-

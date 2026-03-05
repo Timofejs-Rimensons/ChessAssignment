@@ -1,0 +1,310 @@
+{
+  "move_count": 2,
+  "move_history": [
+    {
+      "move_number": 1,
+      "piece": "WHITE Pawn",
+      "from": "E2",
+      "to": "E4",
+      "captured": null
+    },
+    {
+      "move_number": 2,
+      "piece": "BLACK Queen",
+      "from": "D8",
+      "to": "A5",
+      "captured": null
+    }
+  ],
+  "current_turn": "WHITE",
+  "board_state": [
+    {
+      "position": [
+        0,
+        0
+      ],
+      "type": "Rook",
+      "color": "WHITE",
+      "symbol": "r"
+    },
+    {
+      "position": [
+        0,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        0,
+        4
+      ],
+      "type": "Queen",
+      "color": "BLACK",
+      "symbol": "Q"
+    },
+    {
+      "position": [
+        0,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        0,
+        7
+      ],
+      "type": "Rook",
+      "color": "BLACK",
+      "symbol": "R"
+    },
+    {
+      "position": [
+        1,
+        0
+      ],
+      "type": "Knight",
+      "color": "WHITE",
+      "symbol": "k"
+    },
+    {
+      "position": [
+        1,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        1,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        1,
+        7
+      ],
+      "type": "Knight",
+      "color": "BLACK",
+      "symbol": "K"
+    },
+    {
+      "position": [
+        2,
+        0
+      ],
+      "type": "Bishop",
+      "color": "WHITE",
+      "symbol": "b"
+    },
+    {
+      "position": [
+        2,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        2,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        2,
+        7
+      ],
+      "type": "Bishop",
+      "color": "BLACK",
+      "symbol": "B"
+    },
+    {
+      "position": [
+        3,
+        0
+      ],
+      "type": "Queen",
+      "color": "WHITE",
+      "symbol": "q"
+    },
+    {
+      "position": [
+        3,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        3,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        4,
+        0
+      ],
+      "type": "King",
+      "color": "WHITE",
+      "symbol": "k"
+    },
+    {
+      "position": [
+        4,
+        3
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        4,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        4,
+        7
+      ],
+      "type": "King",
+      "color": "BLACK",
+      "symbol": "K"
+    },
+    {
+      "position": [
+        5,
+        0
+      ],
+      "type": "Bishop",
+      "color": "WHITE",
+      "symbol": "b"
+    },
+    {
+      "position": [
+        5,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        5,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        5,
+        7
+      ],
+      "type": "Bishop",
+      "color": "BLACK",
+      "symbol": "B"
+    },
+    {
+      "position": [
+        6,
+        0
+      ],
+      "type": "Knight",
+      "color": "WHITE",
+      "symbol": "k"
+    },
+    {
+      "position": [
+        6,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        6,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        6,
+        7
+      ],
+      "type": "Knight",
+      "color": "BLACK",
+      "symbol": "K"
+    },
+    {
+      "position": [
+        7,
+        0
+      ],
+      "type": "Rook",
+      "color": "WHITE",
+      "symbol": "r"
+    },
+    {
+      "position": [
+        7,
+        1
+      ],
+      "type": "Pawn",
+      "color": "WHITE",
+      "symbol": "p"
+    },
+    {
+      "position": [
+        7,
+        6
+      ],
+      "type": "Pawn",
+      "color": "BLACK",
+      "symbol": "P"
+    },
+    {
+      "position": [
+        7,
+        7
+      ],
+      "type": "Rook",
+      "color": "BLACK",
+      "symbol": "R"
+    }
+  ]
+}
