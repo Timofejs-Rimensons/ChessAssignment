@@ -1,14 +1,57 @@
 from models.pieces import Color, Pawn, Rook, Knight, Bishop, Queen, King
+import os
+from datetime import datetime
+import json
 
-class ChessBoard:
+
+class Board:
 
     def __init__(self):
         self.board = [[None for _ in range(8)] for _ in range(8)]
+        self.move_history = []
+        self.backup_dir = ".backups"
+        self._ensure_backup_dir()
         self._setup()
+        self._save_backup("initial_position")
+
+    def _ensure_backup_dir(self):
+        if not os.path.exists(self.backup_dir):
+            os.makedirs(self.backup_dir)
+
+    def _save_backup(self, label: str = None):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if label:
+            filename = f"{timestamp}_{label}.json"
+        else:
+            filename = f"{timestamp}_move_{len(self.move_history)}.json"
+        
+        filepath = os.path.join(self.backup_dir, filename)
+        
+        backup_data = {
+            "timestamp": timestamp,
+            "move_count": len(self.move_history),
+            "move_history": self.move_history,
+            "board_state": self._serialize_board()
+        }
+        
+        with open(filepath, 'w') as f:
+            json.dump(backup_data, f, indent=2)
+
+    def _serialize_board(self) -> list:
+        board_state = []
+        for col in range(8):
+            for row in range(8):
+                piece = self.board[col][row]
+                if piece:
+                    board_state.append({
+                        "position": [col, row],
+                        "type": piece.name,
+                        "color": piece.color.name,
+                        "symbol": piece.symbol
+                    })
+        return board_state
 
     def _setup(self):
-        """Place all pieces in their standard starting positions."""
-
         for col in range(8):
             self.board[col][1] = Pawn(Color.WHITE, [col, 1])
             self.board[col][6] = Pawn(Color.BLACK, [col, 6])
@@ -49,7 +92,6 @@ class ChessBoard:
             lines.append(row_str)
         return "\n".join(lines)
 
-
     def get_piece(self, position) -> object:
         col, row = position
         return self.board[col][row]
@@ -58,74 +100,80 @@ class ChessBoard:
         piece = self.get_piece(from_pos)
 
         if piece is None:
-            print(f"  [ERROR] No piece at {piece.to_chess_coords(from_pos) if piece else from_pos}")
+            error_msg = f"[ERROR] No piece at {from_pos}"
+            print(error_msg)
             return False
 
         target = self.get_piece(to_pos)
 
         # Prevent capturing own piece
         if target is not None and target.color == piece.color:
-            print(f"Cannot capture your own piece at {piece.to_chess_coords(to_pos)}")
+            error_msg = f"[ERROR] Cannot capture your own piece at {to_pos}"
+            print(error_msg)
             return False
+
+        from_coord = piece.to_chess_coords(from_pos)
+        to_coord = piece.to_chess_coords(to_pos)
+        piece_name = f"{piece.color.name} {piece.name}"
+        target_name = f"{target.color.name} {target.name}" if target else None
 
         success = piece.move(to_pos)
 
         if success:
-            # Capture
-            if target is not None:
-                target.die()
-                print(f"{target.color.name} {target.name} captured!")
-
             col_from, row_from = from_pos
             col_to, row_to = to_pos
             self.board[col_to][row_to] = piece
             self.board[col_from][row_from] = None
 
+            move_info = {
+                "move_number": len(self.move_history) + 1,
+                "piece": piece_name,
+                "from": from_coord,
+                "to": to_coord,
+                "captured": target_name if target else None
+            }
+            self.move_history.append(move_info)
+
+            print(f"\nMOVE #{move_info['move_number']}")
+            print(f"  {piece_name}: {from_coord} → {to_coord}")
+            if target:
+                target.die()
+                print(f"  Captured: {target_name}")
+            print()
+
+            self._save_backup()
+        else:
+            print(f"Illegal move: {piece_name} {from_coord} → {to_coord}\n")
+
         return success
 
+    def coords_to_position(self, chess_coord: str) -> list:
+        coord = chess_coord.upper().strip()
+        if len(coord) != 2:
+            return None
+        
+        col_char = coord[0]
+        row_char = coord[1]
+        
+        if col_char not in "ABCDEFGH" or row_char not in "12345678":
+            return None
+        
+        col = ord(col_char) - ord('A')
+        row = int(row_char) - 1
+        
+        return [col, row]
 
-if __name__ == "__main__":
+    def get_move_history(self) -> str:
+        """Return formatted move history."""
+        if not self.move_history:
+            return "No moves yet."
+        
+        lines = ["MOVE HISTORY:", "─" * 50]
+        for move in self.move_history:
+            move_str = f"{move['move_number']:2d}. {move['piece']:20s} {move['from']} → {move['to']}"
+            if move['captured']:
+                move_str += f" (captured {move['captured']})"
+            lines.append(move_str)
+        return "\n".join(lines)
 
-    print("=" * 50)
-    print("CHESS BOARD — FULL TEST")
-    print("=" * 50)
 
-    game = ChessBoard()
-
-    print("\nInitial board:")
-    print(game.display())
-
-    print("─" * 50)
-    print("TEST 1: White pawn E2 → E4 (double step)")
-    print("─" * 50)
-    game.move_piece([4, 1], [4, 3])
-    print(game.display())
-
-    print("─" * 50)
-    print("TEST 2: Black pawn E7 → E5 (double step)")
-    print("─" * 50)
-    game.move_piece([4, 6], [4, 4])
-    print(game.display())
-
-    print("─" * 50)
-    print("TEST 3: White knight B1 → C3")
-    print("─" * 50)
-    game.move_piece([1, 0], [2, 2])
-    print(game.display())
-
-    print("─" * 50)
-    print("TEST 4: Illegal move — white pawn E4 → E6 (too far)")
-    print("─" * 50)
-    game.move_piece([4, 3], [4, 5])
-
-    print("─" * 50)
-    print("TEST 5: Illegal — capture own piece (white pawn → white knight)")
-    print("─" * 50)
-    game.move_piece([4, 3], [2, 2])
-
-    print("─" * 50)
-    print("TEST 6: White pawn D2 → D4, black pawn captures D4")
-    print("─" * 50)
-    game.move_piece([3, 1], [3, 3])
-    game.move_piece([4, 4], [3, 3])
-    print(game.display())
