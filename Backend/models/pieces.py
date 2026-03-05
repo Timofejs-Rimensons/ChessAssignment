@@ -2,199 +2,271 @@ from abc import ABC, abstractmethod
 import uuid
 from enum import Enum
 
+
 class Color(Enum):
-    NONE = 0
+    NONE  = 0
     WHITE = 1
     BLACK = 2
-    
+
     @classmethod
     def _missing_(cls, value):
         raise ValueError(f"Invalid {cls.__name__} ID: {value}. Valid values: {[e.value for e in cls]}")
-    
-    
+
 class BaseChessPiece(ABC):
-    def __init__(self, color:Enum, name:str, symbol:str, position:list):      
-        self.color = color
-        self.name = name
-        self.symbol = symbol
+
+    COLUMNS = ["A", "B", "C", "D", "E", "F", "G", "H"]
+
+    def __init__(self, color: Enum, name: str, symbol: str, position: list):
+        self.color    = color
+        self.name     = name
+        self.symbol   = symbol
         self.position = position
-        
         self.is_alive = True
-        self.id = str(uuid.uuid4())
-        
+        self.id       = str(uuid.uuid4())
+
     def __str__(self):
-        return f"{self.color.name} {self.name} at {self.position}"
-    
+        return f"{self.color.name} {self.name} ({self.to_chess_coords(self.position)})"
+
     def __repr__(self):
-        return f"{self.color.name} {self.name} at {self.position}"
-        
+        return f"{self.color.name} {self.name} ({self.to_chess_coords(self.position)})"
+
+    def to_chess_coords(self, position) -> str:
+        col, row = position
+        return f"{self.COLUMNS[col]}{row + 1}"
+
+    def _log(self, new_position, note="") -> str:
+        from_coord = self.to_chess_coords(self.position)
+        to_coord   = self.to_chess_coords(new_position)
+        suffix     = f" ({note})" if note else ""
+        return f"{self.color.name} {self.name}: {from_coord} → {to_coord}{suffix}"
+
     @abstractmethod
-    def move(self, new_position: list) -> bool:
-        """Move piece to new position"""
-        pass
-    
+    def move(self, movement: str) -> bool:
+        print(movement)
+
+    @abstractmethod
     def die(self) -> None:
         self.is_alive = False
-    
-    
+
 class Pawn(BaseChessPiece):
-    def __init__(self, color_id: int, position: list):
-        super().__init__(color=Color(color_id), 
-                         name="Pawn",
-                         symbol="♟" if color_id == 1 else "♙",
-                         position=position)
-        
-    def move(self, new_position: list) -> bool:
-        """Pawn moves forward 1 square, or 2 on first move"""
-        if not self.is_alive:
-            return False
-        
-        row_diff = abs(new_position[0] - self.position[0])
-        col_diff = abs(new_position[1] - self.position[1])
-        
-        if new_position[1] != self.position[1]:
-            return False
-        
-        if row_diff == 1 or row_diff == 2:
+    def __init__(self, color: Color, position: list):
+        symbol = "♙" if color == Color.WHITE else "♟"
+        super().__init__(color, "Pawn", symbol, position)
+        self.has_moved = False
+
+    def move(self, new_position, board=None) -> bool:
+        col, row         = self.position
+        new_col, new_row = new_position
+        direction        = 1 if self.color == Color.WHITE else -1
+        row_diff         = (new_row - row) * direction
+        col_diff         = abs(new_col - col)
+
+        if col_diff == 0 and row_diff == 1:
+            super().move(self._log(new_position))
             self.position = new_position
+            self.has_moved = True
             return True
-        
+
+        if col_diff == 0 and row_diff == 2 and not self.has_moved:
+            super().move(self._log(new_position, "double step"))
+            self.position = new_position
+            self.has_moved = True
+            return True
+
+        if col_diff == 1 and row_diff == 1:
+            super().move(self._log(new_position, "capture"))
+            self.position = new_position
+            self.has_moved = True
+            return True
+
+        super().move(self._log(new_position, "illegal move"))
         return False
 
+    def die(self) -> None:
+        self.is_alive = False
+        self.position = None
 
 class Rook(BaseChessPiece):
-    def __init__(self, color_id: int, position: list):
-        super().__init__(color=Color(color_id),
-                         name="Rook",
-                         symbol="♜" if color_id == 1 else "♖",
-                         position=position)
-    
-    def move(self, new_position: list) -> bool:
-        """Rook moves horizontally or vertically"""
-        if not self.is_alive:
-            return False
-        
-        if new_position[0] == self.position[0] or new_position[1] == self.position[1]:
+    def __init__(self, color: Color, position: list):
+        symbol = "♖" if color == Color.WHITE else "♜"
+        super().__init__(color, "Rook", symbol, position)
+        self.has_moved = False
+
+    def move(self, new_position, board=None) -> bool:
+        col, row         = self.position
+        new_col, new_row = new_position
+
+        if col == new_col or row == new_row:
+            super().move(self._log(new_position))
             self.position = new_position
+            self.has_moved = True
             return True
-        
+
+        super().move(self._log(new_position, "illegal move"))
         return False
 
+    def die(self) -> None:
+        self.is_alive = False
+        self.position = None
 
 class Knight(BaseChessPiece):
-    def __init__(self, color_id: int, position: list):
-        super().__init__(color=Color(color_id),
-                         name="Knight",
-                         symbol="♞" if color_id == 1 else "♘",
-                         position=position)
-    
-    def move(self, new_position: list) -> bool:
-        """Knight moves in L-shape: 2 squares in one direction, 1 in perpendicular"""
-        if not self.is_alive:
-            return False
-        
-        row_diff = abs(new_position[0] - self.position[0])
-        col_diff = abs(new_position[1] - self.position[1])
-        
-        if (row_diff == 2 and col_diff == 1) or (row_diff == 1 and col_diff == 2):
+    def __init__(self, color: Color, position: list):
+        symbol = "♘" if color == Color.WHITE else "♞"
+        super().__init__(color, "Knight", symbol, position)
+
+    def move(self, new_position, board=None) -> bool:
+        col, row         = self.position
+        new_col, new_row = new_position
+        col_diff         = abs(new_col - col)
+        row_diff         = abs(new_row - row)
+
+        if sorted([col_diff, row_diff]) == [1, 2]:
+            super().move(self._log(new_position))
             self.position = new_position
             return True
-        
+
+        super().move(self._log(new_position, "illegal move"))
         return False
 
+    def die(self) -> None:
+        self.is_alive = False
+        self.position = None
 
 class Bishop(BaseChessPiece):
-    def __init__(self, color_id: int, position: list):
-        super().__init__(color=Color(color_id),
-                         name="Bishop",
-                         symbol="♝" if color_id == 1 else "♗",
-                         position=position)
-    
-    def move(self, new_position: list) -> bool:
-        """Bishop moves diagonally"""
-        if not self.is_alive:
-            return False
-        
-        row_diff = abs(new_position[0] - self.position[0])
-        col_diff = abs(new_position[1] - self.position[1])
-        
-        if row_diff == col_diff and row_diff > 0:
+    def __init__(self, color: Color, position: list):
+        symbol = "♗" if color == Color.WHITE else "♝"
+        super().__init__(color, "Bishop", symbol, position)
+
+    def move(self, new_position, board=None) -> bool:
+        col, row         = self.position
+        new_col, new_row = new_position
+        col_diff         = abs(new_col - col)
+        row_diff         = abs(new_row - row)
+
+        if col_diff == row_diff and col_diff != 0:
+            super().move(self._log(new_position))
             self.position = new_position
             return True
-        
+
+        super().move(self._log(new_position, "illegal move"))
         return False
 
+    def die(self) -> None:
+        self.is_alive = False
+        self.position = None
 
 class Queen(BaseChessPiece):
-    def __init__(self, color_id: int, position: list):
-        super().__init__(color=Color(color_id),
-                         name="Queen",
-                         symbol="♛" if color_id == 1 else "♕",
-                         position=position)
-    
-    def move(self, new_position: list) -> bool:
-        """Queen moves horizontally, vertically, or diagonally"""
-        if not self.is_alive:
-            return False
-        
-        row_diff = abs(new_position[0] - self.position[0])
-        col_diff = abs(new_position[1] - self.position[1])
-        
-        if (new_position[0] == self.position[0] or new_position[1] == self.position[1] or 
-            row_diff == col_diff) and (row_diff > 0 or col_diff > 0):
+    def __init__(self, color: Color, position: list):
+        symbol = "♕" if color == Color.WHITE else "♛"
+        super().__init__(color, "Queen", symbol, position)
+
+    def move(self, new_position, board=None) -> bool:
+        col, row         = self.position
+        new_col, new_row = new_position
+        col_diff         = abs(new_col - col)
+        row_diff         = abs(new_row - row)
+
+        is_straight  = (col == new_col or row == new_row)
+        is_diagonal  = (col_diff == row_diff and col_diff != 0)
+
+        if is_straight or is_diagonal:
+            super().move(self._log(new_position))
             self.position = new_position
             return True
-        
+
+        super().move(self._log(new_position, "illegal move"))
         return False
 
+    def die(self) -> None:
+        self.is_alive = False
+        self.position = None
 
 class King(BaseChessPiece):
-    def __init__(self, color_id: int, position: list):
-        super().__init__(color=Color(color_id),
-                         name="King",
-                         symbol="♚" if color_id == 1 else "♔",
-                         position=position)
-    
-    def move(self, new_position: list) -> bool:
-        """King moves 1 square in any direction"""
-        if not self.is_alive:
-            return False
-        
-        row_diff = abs(new_position[0] - self.position[0])
-        col_diff = abs(new_position[1] - self.position[1])
-        
-        if row_diff <= 1 and col_diff <= 1 and (row_diff > 0 or col_diff > 0):
+    def __init__(self, color: Color, position: list):
+        symbol = "♔" if color == Color.WHITE else "♚"
+        super().__init__(color, "King", symbol, position)
+        self.has_moved = False
+
+    def move(self, new_position, board=None) -> bool:
+        col, row         = self.position
+        new_col, new_row = new_position
+        col_diff         = abs(new_col - col)
+        row_diff         = abs(new_row - row)
+
+        if max(col_diff, row_diff) == 1:
+            super().move(self._log(new_position))
             self.position = new_position
+            self.has_moved = True
             return True
-        
+
+        super().move(self._log(new_position, "illegal move"))
         return False
 
-
-class EmptySpace(BaseChessPiece):
-    """Represents an empty square on the board"""
-    def __init__(self, position: list):
-        super().__init__(color=Color.NONE,
-                         name="Empty",
-                         symbol="·",
-                         position=position)
+    def die(self) -> None:
         self.is_alive = False
-    
-    def move(self, new_position: list) -> bool:
-        """Empty space cannot move"""
-        return False
+        self.position = None
 
 if __name__ == "__main__":
-    white_pawn = Pawn(Color.WHITE.value, [1, 0])
-    black_king = King(Color.BLACK.value, [7, 4])
-    white_queen = Queen(Color.WHITE.value, [0, 3])
-    empty = EmptySpace([3, 3])
-    
-    print(white_pawn)
-    print(black_king)
-    print(white_queen)
-    print(empty)
-    
-    print(white_pawn.move([2, 0]))
-    print(black_king.move([6, 5]))
-    print(white_queen.move([0, 7]))
-    print(empty.move([4, 4]))
+
+    print("=" * 50)
+    print("PAWN")
+    print("=" * 50)
+    p = Pawn(Color.WHITE, [4, 1])
+    p.move([4, 2])
+    p2 = Pawn(Color.WHITE, [3, 1])
+    p2.move([3, 3])
+    p2.move([3, 4])
+    p2.move([3, 6])
+    p2.move([4, 5])
+    pb = Pawn(Color.BLACK, [0, 6])
+    pb.move([0, 5])
+
+    print("\n" + "=" * 50)
+    print("ROOK")
+    print("=" * 50)
+    r = Rook(Color.WHITE, [0, 0])
+    r.move([0, 5])
+    r.move([4, 5])
+    r.move([6, 7])
+
+    print("\n" + "=" * 50)
+    print("KNIGHT")
+    print("=" * 50)
+    n = Knight(Color.BLACK, [1, 0])
+    n.move([2, 2])
+    n.move([4, 3])
+    n.move([5, 5])
+
+    print("\n" + "=" * 50)
+    print("BISHOP")
+    print("=" * 50)
+    b = Bishop(Color.WHITE, [2, 0])
+    b.move([5, 3])
+    b.move([7, 5])
+    b.move([7, 6])
+
+    print("\n" + "=" * 50)
+    print("QUEEN")
+    print("=" * 50)
+    q = Queen(Color.WHITE, [3, 0])
+    q.move([3, 5])
+    q.move([6, 5])
+    q.move([4, 4])
+    q.move([6, 2])
+    q.move([5, 0])
+
+    print("\n" + "=" * 50)
+    print("KING")
+    print("=" * 50)
+    k = King(Color.BLACK, [4, 7])
+    k.move([4, 6])
+    k.move([3, 5])
+    k.move([3, 3])
+
+    print("\n" + "=" * 50)
+    print("DIE")
+    print("=" * 50)
+    victim = Pawn(Color.BLACK, [4, 4])
+    print(f"Before: {victim} | alive={victim.is_alive}")
+    victim.die()
+    print(f"After:  alive={victim.is_alive} | position={victim.position}")
