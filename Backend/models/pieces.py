@@ -50,7 +50,7 @@ class BaseChessPiece(ABC):
 
 class Pawn(BaseChessPiece):
     def __init__(self, color: Color, position: list):
-        symbol = "♙" if color == Color.WHITE else "♟"
+        symbol = "p" if color == Color.WHITE else "P"
         super().__init__(color, "Pawn", symbol, position)
         self.has_moved = False
 
@@ -88,7 +88,7 @@ class Pawn(BaseChessPiece):
 
 class Rook(BaseChessPiece):
     def __init__(self, color: Color, position: list):
-        symbol = "♖" if color == Color.WHITE else "♜"
+        symbol = "r" if color == Color.WHITE else "R"
         super().__init__(color, "Rook", symbol, position)
         self.has_moved = False
 
@@ -111,7 +111,7 @@ class Rook(BaseChessPiece):
 
 class Knight(BaseChessPiece):
     def __init__(self, color: Color, position: list):
-        symbol = "♘" if color == Color.WHITE else "♞"
+        symbol = "k" if color == Color.WHITE else "K"
         super().__init__(color, "Knight", symbol, position)
 
     def move(self, new_position, board=None) -> bool:
@@ -134,7 +134,7 @@ class Knight(BaseChessPiece):
 
 class Bishop(BaseChessPiece):
     def __init__(self, color: Color, position: list):
-        symbol = "♗" if color == Color.WHITE else "♝"
+        symbol = "b" if color == Color.WHITE else "B"
         super().__init__(color, "Bishop", symbol, position)
 
     def move(self, new_position, board=None) -> bool:
@@ -157,7 +157,7 @@ class Bishop(BaseChessPiece):
 
 class Queen(BaseChessPiece):
     def __init__(self, color: Color, position: list):
-        symbol = "♕" if color == Color.WHITE else "♛"
+        symbol = "q" if color == Color.WHITE else "Q"
         super().__init__(color, "Queen", symbol, position)
 
     def move(self, new_position, board=None) -> bool:
@@ -183,7 +183,7 @@ class Queen(BaseChessPiece):
 
 class King(BaseChessPiece):
     def __init__(self, color: Color, position: list):
-        symbol = "♔" if color == Color.WHITE else "♚"
+        symbol = "k" if color == Color.WHITE else "K"
         super().__init__(color, "King", symbol, position)
         self.has_moved = False
 
